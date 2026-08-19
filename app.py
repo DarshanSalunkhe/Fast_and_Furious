@@ -185,32 +185,76 @@ guardrail_prompt = ChatPromptTemplate.from_messages(
         (
             "system",
             """
-You are a strict topic guardrail.
+You are a topic classification guardrail for a Fast & Furious
+knowledge assistant.
 
-The knowledge base is ONLY about the Fast & Furious franchise.
+Your job is ONLY to decide whether the user's question is related
+to the Fast & Furious franchise.
 
-Determine whether the user's question is related to:
+The application context is:
 
-- Fast & Furious movies
+"This API is a knowledge assistant specifically about the
+Fast & Furious / Fast Saga franchise."
+
+Therefore, questions about the following are RELEVANT:
+
+- Fast & Furious
+- Fast and Furious
 - Fast Saga
+- Fast X
+- F9
+- Furious 7
+- Fast Five
+- Fast & Furious 6
+- The Fate of the Furious
+- Tokyo Drift
 - Characters
-- Actors in the franchise
-- Cars in the franchise
-- Events in the movies
+- Actors
+- Cars
+- Racing
+- Movies
 - Storylines
-- Locations in the movies
-- Relationships between franchise characters
-- Other information directly related to the franchise
+- Villains
+- Heroes
+- Family
+- Relationships
+- Events
+- Locations
+- Movie order
+- Movie details
 
-Respond with ONLY:
+Examples that MUST return YES:
+
+"Who is Dominic Toretto?"
+"Name the characters of Fast and Furious"
+"Name the characters of this franchise"
+"Who are the main characters?"
+"Who played Brian?"
+"What cars are used?"
+"Tell me about Fast Five"
+"Who is the villain?"
+"How many movies are there?"
+
+Examples that MUST return NO:
+
+"What is the capital of India?"
+"Who is Elon Musk?"
+"Write Python code"
+"What is today's weather?"
+"How do I cook rice?"
+
+IMPORTANT:
+
+The words "Fast and Furious", "Fast & Furious", or "Fast Saga"
+are explicit evidence that the question is relevant.
+
+Return ONLY:
 
 YES
 
-or
+or:
 
 NO
-
-Do not answer the user's question.
 """
         ),
         (
@@ -220,11 +264,40 @@ Do not answer the user's question.
     ]
 )
 
-
 guardrail_chain = guardrail_prompt | llm
 
 
 def is_relevant_question(question: str) -> bool:
+
+    # --------------------------------------------------------
+    # Deterministic check for explicit franchise references
+    # --------------------------------------------------------
+
+    q = question.lower().strip()
+
+    explicit_keywords = [
+        "fast and furious",
+        "fast & furious",
+        "fast saga",
+        "fast x",
+        "f9",
+        "furious 7",
+        "fast five",
+        "fast six",
+        "fast & furious 6",
+        "tokyo drift",
+        "fate of the furious"
+    ]
+
+    if any(
+        keyword in q
+        for keyword in explicit_keywords
+    ):
+        return True
+
+    # --------------------------------------------------------
+    # LLM classification for implicit questions
+    # --------------------------------------------------------
 
     response = guardrail_chain.invoke(
         {
@@ -232,12 +305,11 @@ def is_relevant_question(question: str) -> bool:
         }
     )
 
-    result = str(response.content).strip().upper()
+    result = str(
+        response.content
+    ).strip().upper()
 
-    return result.startswith("YES")
-
-
-# ============================================================
+    return result == "YES"# ============================================================
 # 10. RAG PROMPT
 # ============================================================
 
