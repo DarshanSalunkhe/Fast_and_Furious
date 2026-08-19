@@ -379,7 +379,7 @@ User question:
         return False
 
 
-# ============================================================
+## ============================================================
 # 9. GENERATE RAG ANSWER
 # ============================================================
 
@@ -480,7 +480,10 @@ UNSUPPORTED
 
     except Exception as e:
         print("Verification error:", repr(e))
-        return False# ============================================================
+        return False
+
+
+# ============================================================
 # 11. MAIN RAG PIPELINE
 # ============================================================
 
@@ -491,7 +494,6 @@ def answer_question(
     question = question.strip()
 
     if not question:
-
         return {
             "status": "error",
             "answer": "Question cannot be empty.",
@@ -503,7 +505,6 @@ def answer_question(
     # --------------------------------------------------------
 
     if not is_relevant_question(question):
-
         return {
             "status": "irrelevant",
             "answer": (
@@ -513,75 +514,17 @@ def answer_question(
             "sources": [],
         }
 
-    answer = generate_answer(
-    question,
-    context
-)
-
-if not answer:
-    return {
-        "status": "unknown",
-        "answer": (
-            "I don't know based on the available "
-            "Fast & Furious knowledge base."
-        ),
-        "sources": [],
-    }
-
-# Don't waste another Gemini call if the model already
-# says the knowledge base doesn't contain the answer.
-if "I don't know based on the available" in answer:
-    return {
-        "status": "unknown",
-        "answer": answer,
-        "sources": [],
-    }
-
-if not verify_answer(context, answer):
-    return {
-        "status": "unknown",
-        "answer": (
-            "I don't know based on the available "
-            "Fast & Furious knowledge base."
-        ),
-        "sources": [],
-    }
-
-return {
-    "status": "success",
-    "answer": answer,
-    "sources": list(
-        dict.fromkeys(
-            doc.metadata.get(
-                "source",
-                "Unknown"
-            )
-            for doc in retrieved_docs
-        )
-    ),
-}
-
     # --------------------------------------------------------
     # RETRIEVAL
     # --------------------------------------------------------
 
     try:
-
-        retrieved_docs = retriever.invoke(
-            question
-        )
-
+        retrieved_docs = retriever.invoke(question)
     except Exception as e:
-
-        print(
-            "Retrieval Error:",
-            repr(e)
-        )
-
+        print("Retrieval Error:", repr(e))
         raise
 
     if not retrieved_docs:
-
         return {
             "status": "unknown",
             "answer": (
@@ -605,19 +548,12 @@ return {
     # --------------------------------------------------------
 
     try:
-
         answer = generate_answer(
             question,
             context,
         )
-
     except Exception as e:
-
-        print(
-            "Answer Generation Error:",
-            repr(e)
-        )
-
+        print("Answer Generation Error:", repr(e))
         raise
 
     # --------------------------------------------------------
@@ -625,7 +561,6 @@ return {
     # --------------------------------------------------------
 
     if not answer:
-
         return {
             "status": "unknown",
             "answer": (
@@ -635,11 +570,16 @@ return {
             "sources": [],
         }
 
-    if not verify_answer(
-        context,
-        answer,
-    ):
+    # Don't waste another Gemini call if the model already
+    # says the knowledge base doesn't contain the answer.
+    if "I don't know based on the available" in answer:
+        return {
+            "status": "unknown",
+            "answer": answer,
+            "sources": [],
+        }
 
+    if not verify_answer(context, answer):
         return {
             "status": "unknown",
             "answer": (
@@ -658,10 +598,7 @@ return {
         "answer": answer,
         "sources": list(
             dict.fromkeys(
-                doc.metadata.get(
-                    "source",
-                    "Unknown",
-                )
+                doc.metadata.get("source", "Unknown")
                 for doc in retrieved_docs
             )
         ),
@@ -706,7 +643,6 @@ class QuestionResponse(BaseModel):
 
 @app.get("/")
 def home():
-
     return {
         "message": "Fast & Furious RAG API is running",
         "status": "online",
@@ -721,7 +657,6 @@ def home():
 
 @app.get("/health")
 def health():
-
     return {
         "status": "healthy",
     }
@@ -738,23 +673,12 @@ def health():
 def ask_question(
     request: QuestionRequest,
 ):
-
     try:
-
-        result = answer_question(
-            request.question
-        )
-
+        result = answer_question(request.question)
         return result
-
     except Exception as e:
-
-        print(
-            "API ERROR:"
-        )
-
+        print("API ERROR:")
         traceback.print_exc()
-
         raise HTTPException(
             status_code=500,
             detail=str(e),
@@ -766,8 +690,9 @@ def ask_question(
 # ============================================================
 
 if __name__ == "__main__":
-
     import uvicorn
+    import os
+    import traceback
 
     port = int(
         os.getenv(
