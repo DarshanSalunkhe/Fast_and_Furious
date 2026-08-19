@@ -1,4 +1,6 @@
 import streamlit as st
+import requests
+
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -7,9 +9,15 @@ import streamlit as st
 st.set_page_config(
     page_title="Fast & Furious RAG",
     page_icon="🏎️",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
+
+
+# ============================================================
+# RAG BACKEND URL
+# ============================================================
+
+RAG_API_URL = "https://fast-and-furious-fl85.onrender.com/ask"
 
 
 # ============================================================
@@ -20,37 +28,37 @@ st.markdown(
     """
     <style>
 
-    /* Main background */
     .stApp {
         background: #0b0b0f;
         color: white;
     }
 
-    /* Remove top padding */
     .block-container {
         padding-top: 3rem;
         padding-bottom: 2rem;
         max-width: 850px;
     }
 
-    /* Main title */
+    .logo {
+        text-align: center;
+        font-size: 65px;
+        margin-bottom: 5px;
+    }
+
     .main-title {
         font-size: 42px;
         font-weight: 800;
         text-align: center;
-        margin-bottom: 5px;
         color: white;
+        margin-bottom: 5px;
     }
 
-    /* Subtitle */
     .subtitle {
         text-align: center;
         font-size: 20px;
         color: #b9b9c3;
-        margin-bottom: 10px;
     }
 
-    /* Description */
     .description {
         text-align: center;
         font-size: 16px;
@@ -58,37 +66,6 @@ st.markdown(
         margin-bottom: 35px;
     }
 
-    /* Logo */
-    .logo {
-        text-align: center;
-        font-size: 65px;
-        margin-bottom: 5px;
-    }
-
-    /* Chat messages */
-    .user-message {
-        background: #24242e;
-        padding: 12px 16px;
-        border-radius: 14px;
-        margin: 10px 0;
-        color: white;
-    }
-
-    .assistant-message {
-        background: #17171e;
-        padding: 12px 16px;
-        border-radius: 14px;
-        margin: 10px 0;
-        color: white;
-        border: 1px solid #292933;
-    }
-
-    /* Input box */
-    div[data-testid="stChatInput"] {
-        border-radius: 15px;
-    }
-
-    /* Hide Streamlit branding */
     #MainMenu {
         visibility: hidden;
     }
@@ -138,21 +115,16 @@ st.markdown(
 
 
 # ============================================================
-# SESSION STATE
+# CHAT HISTORY
 # ============================================================
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# ============================================================
-# DISPLAY PREVIOUS MESSAGES
-# ============================================================
-
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
-
         st.markdown(message["content"])
 
 
@@ -166,12 +138,12 @@ question = st.chat_input(
 
 
 # ============================================================
-# HANDLE USER QUESTION
+# SEND QUESTION TO RAG API
 # ============================================================
 
 if question:
 
-    # Store user message
+    # Show user's question
     st.session_state.messages.append(
         {
             "role": "user",
@@ -179,28 +151,100 @@ if question:
         }
     )
 
-    # Display user message
     with st.chat_message("user"):
         st.markdown(question)
 
-    # Temporary response
-    # This will later be replaced with your RAG API call.
-    response = (
-        "🏎️ Your RAG system is not connected yet. "
-        "Once the Fast & Furious RAG backend is deployed, "
-        "this response will come directly from your knowledge base."
-    )
 
-    # Display assistant response
+    # Ask FastAPI RAG backend
     with st.chat_message("assistant"):
 
         with st.spinner("Searching the Fast & Furious knowledge base..."):
-            st.markdown(response)
 
-    # Store assistant response
+            try:
+
+                response = requests.post(
+                    RAG_API_URL,
+                    json={
+                        "question": question
+                    },
+                    timeout=120
+                )
+
+
+                # Check HTTP response
+                if response.status_code == 200:
+
+                    data = response.json()
+
+                    answer = data.get(
+                        "answer",
+                        "No answer was returned."
+                    )
+
+                    status = data.get(
+                        "status",
+                        "unknown"
+                    )
+
+
+                    # Display answer
+                    st.markdown(answer)
+
+
+                    # Optional source information
+                    sources = data.get("sources", [])
+
+                    if sources:
+                        with st.expander("Retrieved Sources"):
+                            for source in sources:
+                                st.write(f"• {source}")
+
+
+                else:
+
+                    answer = (
+                        f"RAG API returned an error "
+                        f"(HTTP {response.status_code})."
+                    )
+
+                    st.error(answer)
+
+
+            except requests.exceptions.Timeout:
+
+                answer = (
+                    "The RAG server took too long to respond. "
+                    "Please try again."
+                )
+
+                st.error(answer)
+
+
+            except requests.exceptions.RequestException as e:
+
+                answer = (
+                    "Unable to connect to the Fast & Furious "
+                    "RAG backend."
+                )
+
+                st.error(answer)
+
+                st.caption(str(e))
+
+
+            except Exception as e:
+
+                answer = "An unexpected error occurred."
+
+                st.error(answer)
+
+                st.caption(str(e))
+
+
+    # Save assistant response
     st.session_state.messages.append(
         {
             "role": "assistant",
-            "content": response
+            "content": answer
         }
     )
