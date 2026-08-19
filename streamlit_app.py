@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
 
+import ast
+import json
+
 
 # ============================================================
 # CONFIGURATION
@@ -270,11 +273,21 @@ if "messages" not in st.session_state:
 # CLEAN GEMINI RESPONSE
 # ============================================================
 
+
+
 def clean_response(raw_answer):
     """
-    Removes Gemini thinking/reasoning blocks and returns
-    only the final text.
+    Extract only the final text from Gemini's response.
+    Handles:
+    1. Actual Python lists
+    2. JSON strings
+    3. Python-representation strings
+    4. Normal text
     """
+
+    # --------------------------------------------------------
+    # CASE 1: Already a list
+    # --------------------------------------------------------
 
     if isinstance(raw_answer, list):
 
@@ -285,29 +298,59 @@ def clean_response(raw_answer):
             if not isinstance(block, dict):
                 continue
 
-            block_type = block.get("type")
-
-            # Ignore Gemini thinking blocks
-            if block_type == "thinking":
+            # Ignore thinking/reasoning
+            if block.get("type") == "thinking":
                 continue
 
-            # Keep normal text blocks
-            if block_type == "text":
-
+            # Keep final text
+            if block.get("type") == "text":
                 text = block.get("text", "")
 
                 if text:
                     text_parts.append(text)
 
-        if text_parts:
-            return "\n".join(text_parts).strip()
-
-        return "No answer was returned."
-
-    return str(raw_answer).strip()
+        return "\n".join(text_parts).strip()
 
 
-# ============================================================
+    # --------------------------------------------------------
+    # CASE 2: String
+    # --------------------------------------------------------
+
+    if isinstance(raw_answer, str):
+
+        cleaned = raw_answer.strip()
+
+        # Try JSON first
+        try:
+            parsed = json.loads(cleaned)
+
+            if isinstance(parsed, list):
+                return clean_response(parsed)
+
+        except Exception:
+            pass
+
+
+        # Try Python list representation
+        try:
+            parsed = ast.literal_eval(cleaned)
+
+            if isinstance(parsed, list):
+                return clean_response(parsed)
+
+        except Exception:
+            pass
+
+
+        # Normal text
+        return cleaned
+
+
+    # --------------------------------------------------------
+    # Fallback
+    # --------------------------------------------------------
+
+    return str(raw_answer)# ============================================================
 # CALL RAG API
 # ============================================================
 
