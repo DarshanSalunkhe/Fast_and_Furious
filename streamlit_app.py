@@ -3,21 +3,17 @@ import requests
 
 
 # ============================================================
-# PAGE CONFIGURATION
+# CONFIGURATION
 # ============================================================
+
+RAG_API_URL = "https://fast-and-furious-fl85.onrender.com/ask"
 
 st.set_page_config(
     page_title="Fast & Furious RAG",
     page_icon="🏎️",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed",
 )
-
-
-# ============================================================
-# RAG BACKEND URL
-# ============================================================
-
-RAG_API_URL = "https://fast-and-furious-fl85.onrender.com/ask"
 
 
 # ============================================================
@@ -28,49 +24,24 @@ st.markdown(
     """
     <style>
 
+    /* ========================================================
+       GLOBAL
+       ======================================================== */
+
     .stApp {
         background: #0b0b0f;
-        color: white;
+        color: #ffffff;
     }
 
     .block-container {
-        padding-top: 3rem;
-        padding-bottom: 2rem;
-        max-width: 850px;
+        max-width: 900px;
+        padding-top: 2.5rem;
+        padding-bottom: 7rem;
     }
 
-    .logo {
-        text-align: center;
-        font-size: 65px;
-        margin-bottom: 5px;
-    }
-
-    .main-title {
-        font-size: 42px;
-        font-weight: 800;
-        text-align: center;
-        color: white;
-        margin-bottom: 5px;
-    }
-
-    .subtitle {
-        text-align: center;
-        font-size: 20px;
-        color: #b9b9c3;
-    }
-
-    .description {
-        text-align: center;
-        font-size: 16px;
-        color: #8f8f9b;
-        margin-bottom: 35px;
-    }
+    /* Hide Streamlit default elements */
 
     #MainMenu {
-        visibility: hidden;
-    }
-
-    footer {
         visibility: hidden;
     }
 
@@ -78,9 +49,182 @@ st.markdown(
         visibility: hidden;
     }
 
+    footer {
+        visibility: hidden;
+    }
+
+
+    /* ========================================================
+       HEADER
+       ======================================================== */
+
+    .car-logo {
+        text-align: center;
+        font-size: 58px;
+        line-height: 1;
+        margin-bottom: 12px;
+    }
+
+    .main-title {
+        text-align: center;
+        color: #ffffff;
+        font-size: 44px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #b8b8c2;
+        font-size: 21px;
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+
+    .description {
+        text-align: center;
+        color: #8e8e99;
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0 auto 35px auto;
+        max-width: 700px;
+    }
+
+
+    /* ========================================================
+       CHAT MESSAGES
+       ======================================================== */
+
+    div[data-testid="stChatMessage"] {
+        border-radius: 14px;
+        margin-bottom: 12px;
+    }
+
+    /* User message */
+
+    div[data-testid="stChatMessage"]:has(
+        div[data-testid="chatAvatarIcon-user"]
+    ) {
+        background: #25252d;
+    }
+
+    /* Assistant message */
+
+    div[data-testid="stChatMessage"]:has(
+        div[data-testid="chatAvatarIcon-assistant"]
+    ) {
+        background: #15151c;
+        border: 1px solid #292932;
+    }
+
+
+    /* Message text */
+
+    div[data-testid="stChatMessage"] p {
+        color: #f5f5f7 !important;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+
+    /* ========================================================
+       CHAT INPUT
+       ======================================================== */
+
+    div[data-testid="stChatInput"] {
+        background: #181820 !important;
+        border: 1px solid #34343e !important;
+        border-radius: 16px !important;
+    }
+
+    div[data-testid="stChatInput"] textarea {
+        color: #ffffff !important;
+        background: #181820 !important;
+        caret-color: #ffffff !important;
+        font-size: 16px !important;
+    }
+
+    div[data-testid="stChatInput"] textarea::placeholder {
+        color: #8e8e99 !important;
+        opacity: 1 !important;
+    }
+
+    div[data-testid="stChatInput"] textarea:focus {
+        color: #ffffff !important;
+    }
+
+
+    /* ========================================================
+       INPUT SEND BUTTON
+       ======================================================== */
+
+    div[data-testid="stChatInput"] button {
+        color: #ffffff !important;
+    }
+
+
+    /* ========================================================
+       SPINNER
+       ======================================================== */
+
+    div[data-testid="stSpinner"] {
+        color: #ffffff !important;
+    }
+
+
+    /* ========================================================
+       ERROR BOX
+       ======================================================== */
+
+    div[data-testid="stAlert"] {
+        border-radius: 12px;
+    }
+
+
+    /* ========================================================
+       SOURCE EXPANDER
+       ======================================================== */
+
+    div[data-testid="stExpander"] {
+        background: #121219;
+        border: 1px solid #292932;
+        border-radius: 12px;
+    }
+
+
+    /* ========================================================
+       MOBILE
+       ======================================================== */
+
+    @media (max-width: 600px) {
+
+        .block-container {
+            padding-top: 1.8rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .main-title {
+            font-size: 34px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+        }
+
+        .description {
+            font-size: 14px;
+        }
+
+        .car-logo {
+            font-size: 48px;
+        }
+    }
+
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
@@ -89,18 +233,18 @@ st.markdown(
 # ============================================================
 
 st.markdown(
-    '<div class="logo">🏎️</div>',
-    unsafe_allow_html=True
+    '<div class="car-logo">🏎️</div>',
+    unsafe_allow_html=True,
 )
 
 st.markdown(
     '<div class="main-title">Fast & Furious</div>',
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 st.markdown(
     '<div class="subtitle">RAG Knowledge Database</div>',
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 st.markdown(
@@ -110,22 +254,217 @@ st.markdown(
         characters, movies, cars, and events!
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
 # ============================================================
-# CHAT HISTORY
+# SESSION STATE
 # ============================================================
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
+# ============================================================
+# CLEAN GEMINI RESPONSE
+# ============================================================
+
+def clean_response(raw_answer):
+    """
+    Removes Gemini thinking/reasoning blocks and returns
+    only the final text.
+    """
+
+    if isinstance(raw_answer, list):
+
+        text_parts = []
+
+        for block in raw_answer:
+
+            if not isinstance(block, dict):
+                continue
+
+            block_type = block.get("type")
+
+            # Ignore Gemini thinking blocks
+            if block_type == "thinking":
+                continue
+
+            # Keep normal text blocks
+            if block_type == "text":
+
+                text = block.get("text", "")
+
+                if text:
+                    text_parts.append(text)
+
+        if text_parts:
+            return "\n".join(text_parts).strip()
+
+        return "No answer was returned."
+
+    return str(raw_answer).strip()
+
+
+# ============================================================
+# CALL RAG API
+# ============================================================
+
+def ask_rag(question):
+    """
+    Sends the user's question to the Fast & Furious
+    FastAPI RAG backend.
+    """
+
+    try:
+
+        response = requests.post(
+            RAG_API_URL,
+            json={
+                "question": question
+            },
+            timeout=120,
+        )
+
+        # ----------------------------------------------------
+        # Successful response
+        # ----------------------------------------------------
+
+        if response.status_code == 200:
+
+            data = response.json()
+
+            raw_answer = data.get(
+                "answer",
+                "No answer was returned by the RAG system.",
+            )
+
+            answer = clean_response(raw_answer)
+
+            status = data.get(
+                "status",
+                "unknown",
+            )
+
+            sources = data.get(
+                "sources",
+                [],
+            )
+
+            return {
+                "success": True,
+                "answer": answer,
+                "status": status,
+                "sources": sources,
+            }
+
+
+        # ----------------------------------------------------
+        # API error
+        # ----------------------------------------------------
+
+        return {
+            "success": False,
+            "answer": (
+                f"The RAG server returned an error "
+                f"(HTTP {response.status_code})."
+            ),
+            "status": "error",
+            "sources": [],
+        }
+
+
+    # --------------------------------------------------------
+    # Timeout
+    # --------------------------------------------------------
+
+    except requests.exceptions.Timeout:
+
+        return {
+            "success": False,
+            "answer": (
+                "The RAG server took too long to respond. "
+                "Please try again."
+            ),
+            "status": "timeout",
+            "sources": [],
+        }
+
+
+    # --------------------------------------------------------
+    # Connection error
+    # --------------------------------------------------------
+
+    except requests.exceptions.ConnectionError:
+
+        return {
+            "success": False,
+            "answer": (
+                "I couldn't connect to the Fast & Furious "
+                "RAG server. The backend may be starting up."
+            ),
+            "status": "connection_error",
+            "sources": [],
+        }
+
+
+    # --------------------------------------------------------
+    # Other request errors
+    # --------------------------------------------------------
+
+    except requests.exceptions.RequestException as error:
+
+        return {
+            "success": False,
+            "answer": "Unable to connect to the RAG backend.",
+            "status": "request_error",
+            "sources": [],
+        }
+
+
+    # --------------------------------------------------------
+    # Unexpected error
+    # --------------------------------------------------------
+
+    except Exception as error:
+
+        return {
+            "success": False,
+            "answer": "An unexpected error occurred.",
+            "status": "error",
+            "sources": [],
+        }
+
+
+# ============================================================
+# DISPLAY PREVIOUS CHAT
+# ============================================================
+
 for message in st.session_state.messages:
 
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    role = message["role"]
+    content = message["content"]
+
+    with st.chat_message(role):
+
+        st.markdown(content)
+
+        # Display sources only for assistant messages
+        if role == "assistant":
+
+            sources = message.get("sources", [])
+
+            if sources:
+
+                unique_sources = list(
+                    dict.fromkeys(sources)
+                )
+
+                with st.expander("📚 Retrieved Sources"):
+
+                    for source in unique_sources:
+                        st.write(f"• {source}")
 
 
 # ============================================================
@@ -138,113 +477,97 @@ question = st.chat_input(
 
 
 # ============================================================
-# SEND QUESTION TO RAG API
+# PROCESS QUESTION
 # ============================================================
 
 if question:
 
-    # Show user's question
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": question
-        }
-    )
+    question = question.strip()
 
-    with st.chat_message("user"):
-        st.markdown(question)
+    if question:
+
+        # ----------------------------------------------------
+        # Store and display user question
+        # ----------------------------------------------------
+
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": question,
+            }
+        )
+
+        with st.chat_message("user"):
+            st.markdown(question)
 
 
-    # Ask FastAPI RAG backend
-    with st.chat_message("assistant"):
+        # ----------------------------------------------------
+        # Get RAG response
+        # ----------------------------------------------------
 
-        with st.spinner("Searching the Fast & Furious knowledge base..."):
+        with st.chat_message("assistant"):
 
-            try:
+            with st.spinner(
+                "🔎 Searching the Fast & Furious knowledge base..."
+            ):
 
-                response = requests.post(
-                    RAG_API_URL,
-                    json={
-                        "question": question
-                    },
-                    timeout=120
+                result = ask_rag(question)
+
+
+            # ------------------------------------------------
+            # Display result
+            # ------------------------------------------------
+
+            if result["success"]:
+
+                st.markdown(
+                    result["answer"]
+                )
+
+            else:
+
+                st.error(
+                    result["answer"]
                 )
 
 
-                # Check HTTP response
-                if response.status_code == 200:
+            # ------------------------------------------------
+            # Display sources
+            # ------------------------------------------------
 
-                    data = response.json()
+            sources = result.get(
+                "sources",
+                []
+            )
 
-                    answer = data.get(
-                        "answer",
-                        "No answer was returned."
-                    )
+            if sources:
 
-                    status = data.get(
-                        "status",
-                        "unknown"
-                    )
-
-
-                    # Display answer
-                    st.markdown(answer)
-
-
-                    # Optional source information
-                    sources = data.get("sources", [])
-
-                    if sources:
-                        with st.expander("Retrieved Sources"):
-                            for source in sources:
-                                st.write(f"• {source}")
-
-
-                else:
-
-                    answer = (
-                        f"RAG API returned an error "
-                        f"(HTTP {response.status_code})."
-                    )
-
-                    st.error(answer)
-
-
-            except requests.exceptions.Timeout:
-
-                answer = (
-                    "The RAG server took too long to respond. "
-                    "Please try again."
+                unique_sources = list(
+                    dict.fromkeys(sources)
                 )
 
-                st.error(answer)
+                with st.expander(
+                    "📚 Retrieved Sources"
+                ):
+
+                    for source in unique_sources:
+
+                        st.write(
+                            f"• {source}"
+                        )
 
 
-            except requests.exceptions.RequestException as e:
+        # ----------------------------------------------------
+        # Store assistant response
+        # ----------------------------------------------------
 
-                answer = (
-                    "Unable to connect to the Fast & Furious "
-                    "RAG backend."
-                )
-
-                st.error(answer)
-
-                st.caption(str(e))
-
-
-            except Exception as e:
-
-                answer = "An unexpected error occurred."
-
-                st.error(answer)
-
-                st.caption(str(e))
-
-
-    # Save assistant response
-    st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": answer
-        }
-    )
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": result["answer"],
+                "sources": result.get(
+                    "sources",
+                    []
+                ),
+            }
+        )
