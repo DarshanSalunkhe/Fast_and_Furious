@@ -429,63 +429,58 @@ ANSWER:
 #     ANSWER VERIFICATION
 # ============================================================
 
-def verify_answer(
-    context: str,
-    answer: str,
-) -> bool:
+def verify_answer(context: str, answer: str) -> bool:
+
+    if not answer.strip():
+        return False
+
+    unknown_phrase = (
+        "I don't know based on the available "
+        "Fast & Furious knowledge base."
+    )
+
+    if answer.strip() == unknown_phrase:
+        return False
 
     prompt = f"""
-You are an answer verification guardrail.
+You are a factual verification guardrail for a Fast & Furious
+knowledge assistant.
 
-Your job is to determine whether the proposed answer is supported
-by the supplied context.
+Determine whether the ANSWER is supported by the CONTEXT.
 
-Do NOT use outside knowledge.
-
-SUPPLIED CONTEXT:
-
+CONTEXT:
 {context}
 
-PROPOSED ANSWER:
-
+ANSWER:
 {answer}
 
-If the proposed answer is fully supported by the context,
-return ONLY:
+The answer does not need to use exactly the same words as the
+context. It only needs to be factually supported by the context.
+
+Return exactly one word:
 
 SUPPORTED
 
-Otherwise return ONLY:
+or
 
 UNSUPPORTED
 """
 
     try:
-
         response = llm.invoke(prompt)
 
-        result = str(
-            response.content
-        ).strip().upper()
+        result = str(response.content).strip().upper()
 
-        print(
-            "Answer Verification:",
-            result
-        )
+        print("VERIFICATION RESULT:", result)
 
-        return result == "SUPPORTED"
-
-    except Exception as e:
-
-        print(
-            "Answer Verification Error:",
-            repr(e)
-        )
+        if "SUPPORTED" in result:
+            return True
 
         return False
 
-
-# ============================================================
+    except Exception as e:
+        print("Verification error:", repr(e))
+        return False# ============================================================
 # 11. MAIN RAG PIPELINE
 # ============================================================
 
@@ -517,6 +512,54 @@ def answer_question(
             ),
             "sources": [],
         }
+
+    answer = generate_answer(
+    question,
+    context
+)
+
+if not answer:
+    return {
+        "status": "unknown",
+        "answer": (
+            "I don't know based on the available "
+            "Fast & Furious knowledge base."
+        ),
+        "sources": [],
+    }
+
+# Don't waste another Gemini call if the model already
+# says the knowledge base doesn't contain the answer.
+if "I don't know based on the available" in answer:
+    return {
+        "status": "unknown",
+        "answer": answer,
+        "sources": [],
+    }
+
+if not verify_answer(context, answer):
+    return {
+        "status": "unknown",
+        "answer": (
+            "I don't know based on the available "
+            "Fast & Furious knowledge base."
+        ),
+        "sources": [],
+    }
+
+return {
+    "status": "success",
+    "answer": answer,
+    "sources": list(
+        dict.fromkeys(
+            doc.metadata.get(
+                "source",
+                "Unknown"
+            )
+            for doc in retrieved_docs
+        )
+    ),
+}
 
     # --------------------------------------------------------
     # RETRIEVAL
